@@ -2,26 +2,19 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<title>MDS Smart Attendance v5 (Sync + Sort)</title>
+<title>MDS Smart Attendance (Stable Version)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-*{box-sizing:border-box;}
 body{margin:0;font-family:Segoe UI;background:#0f172a;color:white;}
 
-header{
-display:flex;justify-content:space-between;align-items:center;
-padding:15px;background:#0b1220;flex-wrap:wrap;
-}
+header{display:flex;justify-content:space-between;align-items:center;padding:15px;background:#0b1220;flex-wrap:wrap;}
 
-.logoBox{display:flex;align-items:center;gap:12px;}
-.logoBox img{
-width:55px;height:55px;background:white;
-padding:5px;border-radius:10px;cursor:pointer;
-}
+.logoBox{display:flex;align-items:center;gap:10px;}
+.logoBox img{width:55px;height:55px;background:white;padding:5px;border-radius:10px;cursor:pointer;}
 
-#clock{font-size:30px;}
-#date{font-size:16px;color:#cbd5e1;}
+#clock{font-size:28px;}
+#date{font-size:14px;color:#cbd5e1;}
 
 .kpiBox{display:flex;gap:10px;padding:10px;flex-wrap:wrap;}
 .kpi{flex:1;padding:10px;border-radius:10px;text-align:center;font-weight:bold;}
@@ -30,57 +23,23 @@ padding:5px;border-radius:10px;cursor:pointer;
 .red{background:#ef4444;}
 .blue{background:#3b82f6;}
 
-#loginBox{
-display:flex;flex-direction:column;align-items:center;
-justify-content:center;height:80vh;gap:10px;
-}
+#loginBox{display:flex;flex-direction:column;align-items:center;justify-content:center;height:80vh;gap:10px;}
 
-input,button,select,textarea{
-padding:10px;border-radius:10px;border:none;width:220px;
-}
+input,button,select,textarea{padding:10px;border-radius:10px;border:none;width:220px;}
 
-.topBar{
-display:none;
-padding:10px;
-gap:10px;
-background:#111827;
-flex-wrap:wrap;
-}
+.topBar{display:none;padding:10px;gap:10px;background:#111827;flex-wrap:wrap;}
 
-.tableWrap{padding:10px;overflow:auto;}
-
-table{
-width:100%;
-min-width:1100px;
-background:#1f2937;
-border-collapse:collapse;
-}
-
-th,td{
-padding:10px;
-text-align:center;
-border-bottom:1px solid #374151;
-}
-
+table{width:100%;border-collapse:collapse;background:#1f2937;}
+th,td{padding:10px;text-align:center;border-bottom:1px solid #374151;}
 th{background:#111827;}
 
-img.avatar{
-width:45px;height:45px;border-radius:50%;
-object-fit:cover;
-}
+.btn{padding:6px 10px;border:none;border-radius:8px;cursor:pointer;}
+.edit{background:#3b82f6;color:white;}
+.del{background:#ef4444;color:white;}
+.sync{background:#22c55e;color:white;}
+.logoBtn{background:#10b981;color:white;}
 
-.status{padding:6px 10px;border-radius:10px;font-weight:bold;}
-.status.hadir{background:#16a34a;}
-.status.cuti{background:#f59e0b;color:black;}
-.status.tiada{background:#ef4444;}
-.status.urusan{background:#3b82f6;}
-
-.btn-edit{background:#3b82f6;color:white;padding:6px 10px;border-radius:8px;border:none;cursor:pointer;}
-.btn-del{background:#ef4444;color:white;padding:6px 10px;border-radius:8px;border:none;cursor:pointer;}
-.btn-sync{background:#22c55e;color:white;padding:6px 10px;border-radius:8px;border:none;cursor:pointer;}
-.btn-logo{background:#10b981;color:white;padding:6px 10px;border-radius:8px;border:none;cursor:pointer;}
-
-#staffForm{
+#formBox{
 display:none;
 position:fixed;
 top:50%;left:50%;
@@ -90,11 +49,6 @@ padding:20px;
 border-radius:10px;
 z-index:999;
 }
-
-#preview{
-width:70px;height:70px;border-radius:50%;
-object-fit:cover;display:none;margin:auto;
-}
 </style>
 </head>
 
@@ -102,10 +56,10 @@ object-fit:cover;display:none;margin:auto;
 
 <header>
 <div class="logoBox">
-<img id="mainLogo" src="logo_mds.png">
+<img id="logo" src="logo.png">
 <div>
-<h2>MAJLIS DAERAH SIMUNJAN</h2>
-<p>Smart Attendance System</p>
+<h3>MDS Attendance</h3>
+<small>Google Sheets System</small>
 </div>
 </div>
 
@@ -116,28 +70,23 @@ object-fit:cover;display:none;margin:auto;
 </header>
 
 <div class="kpiBox">
-<div class="kpi green">Hadir<div id="kpiHadir">0</div></div>
-<div class="kpi yellow">Cuti<div id="kpiCuti">0</div></div>
-<div class="kpi red">Tiada<div id="kpiTiada">0</div></div>
-<div class="kpi blue">Urusan<div id="kpiUrusan">0</div></div>
+<div class="kpi green">Hadir <div id="kpiHadir">0</div></div>
+<div class="kpi yellow">Cuti <div id="kpiCuti">0</div></div>
+<div class="kpi red">Tiada <div id="kpiTiada">0</div></div>
+<div class="kpi blue">Urusan <div id="kpiUrusan">0</div></div>
 </div>
 
 <div id="loginBox">
 <input id="user" placeholder="username">
 <input id="pass" type="password" placeholder="password">
 <button onclick="login()">Login</button>
-<button onclick="guestLogin()">Guest</button>
+<button onclick="guest()">Guest</button>
 </div>
 
-<!-- TOP BAR -->
 <div class="topBar">
 <button onclick="openForm()">+ Staf</button>
 
-<button id="btnLogo" class="btn-logo" onclick="addLogo()" style="display:none;">Add Logo</button>
-<button id="btnSync" class="btn-sync" onclick="syncData()" style="display:none;">Sync</button>
-
-<!-- SORT DROPDOWN -->
-<select id="sortDept" onchange="render()">
+<select id="filter" onchange="render()">
 <option value="all">Semua Bahagian</option>
 <option>Khidmat Pengurusan</option>
 <option>Komuniti</option>
@@ -149,17 +98,19 @@ object-fit:cover;display:none;margin:auto;
 <option>Kewangan</option>
 </select>
 
+<button class="sync" onclick="sync()">Sync</button>
 <button onclick="window.print()">Print</button>
-<button onclick="logout()">Log Off</button>
+<button onclick="logout()">Log Out</button>
+
+<button id="logoBtn" class="logoBtn" style="display:none" onclick="changeLogo()">Add Logo</button>
 </div>
 
 <!-- FORM -->
-<div id="staffForm">
+<div id="formBox">
+<input id="name" placeholder="Nama">
+<input id="job" placeholder="Jawatan">
 
-<input id="s_name" placeholder="Nama">
-<input id="s_job" placeholder="Jawatan">
-
-<select id="s_section">
+<select id="section">
 <option>Khidmat Pengurusan</option>
 <option>Komuniti</option>
 <option>Penguat Kuasa</option>
@@ -170,270 +121,207 @@ object-fit:cover;display:none;margin:auto;
 <option>Kewangan</option>
 </select>
 
-<select id="s_pagi">
+<select id="pagi">
 <option>Hadir</option><option>Cuti</option><option>Tiada</option><option>Urusan</option>
 </select>
 
-<select id="s_petang">
+<select id="petang">
 <option>Hadir</option><option>Cuti</option><option>Tiada</option><option>Urusan</option>
 </select>
 
-<textarea id="s_note"></textarea>
+<textarea id="note"></textarea>
 
-<input type="file" onchange="previewPhoto(event)">
-<br>
-<img id="preview">
-
-<br><br>
-<button onclick="saveStaff()">Simpan</button>
+<button onclick="save()">Simpan</button>
 <button onclick="closeForm()">Tutup</button>
 </div>
 
-<!-- TABLE -->
-<div class="tableWrap">
 <table>
 <thead>
 <tr>
-<th>Foto</th>
 <th>Nama</th>
 <th>Jawatan</th>
 <th>Bahagian</th>
-<th>Pagi</th>
-<th>Petang</th>
-<th>Catatan</th>
 <th>Status</th>
 <th>Aksi</th>
 </tr>
 </thead>
-<tbody id="report"></tbody>
+<tbody id="tb"></tbody>
 </table>
-</div>
 
 <script>
+
 const URL = "https://script.google.com/macros/s/AKfycbzKGAnote2RXMFNUK6DYAxB9sMpDyVn2_o28gZjkEsRAilP1A4v8W0CGQ8vQ7JH7BPi/exec";
 
-const clock=document.getElementById("clock");
-const date=document.getElementById("date");
-const user=document.getElementById("user");
-const pass=document.getElementById("pass");
-const staffForm=document.getElementById("staffForm");
-const report=document.getElementById("report");
-const preview=document.getElementById("preview");
-
-const btnLogo=document.getElementById("btnLogo");
-const btnSync=document.getElementById("btnSync");
-const sortDept=document.getElementById("sortDept");
-
-let data = [];
+let data=[];
 let currentUser={role:"guest"};
 let editId=null;
 
+/* CLOCK */
+setInterval(()=>{
+clock.innerText=new Date().toLocaleTimeString();
+date.innerText=new Date().toLocaleDateString();
+},1000);
+
+/* LOGIN */
 function login(){
-
-currentUser = (user.value=="admin" && pass.value=="123")
-? {role:"admin"}
-: {role:"guest"};
-
-document.getElementById("loginBox").style.display="none";
-document.querySelector(".topBar").style.display="flex";
-
-btnLogo.style.display = currentUser.role=="admin" ? "inline-block" : "none";
-btnSync.style.display = currentUser.role=="admin" ? "inline-block" : "none";
-
-load();
-}
-
-function guestLogin(){
-
+if(user.value=="admin" && pass.value=="123"){
+currentUser={role:"admin"};
+}else{
 currentUser={role:"guest"};
-
+}
 document.getElementById("loginBox").style.display="none";
 document.querySelector(".topBar").style.display="flex";
 
-btnLogo.style.display="none";
-btnSync.style.display="none";
+document.getElementById("logoBtn").style.display=
+currentUser.role=="admin"?"inline-block":"none";
 
 load();
 }
 
-function logout(){
-location.reload();
+function guest(){
+currentUser={role:"guest"};
+document.getElementById("loginBox").style.display="none";
+document.querySelector(".topBar").style.display="flex";
+load();
 }
 
-function openForm(){
-staffForm.style.display="block";
-}
+function logout(){location.reload();}
 
-function closeForm(){
-staffForm.style.display="none";
-resetForm();
-}
-
-function resetForm(){
-s_name.value="";
-s_job.value="";
-s_note.value="";
-preview.style.display="none";
-editId=null;
-}
-
-function previewPhoto(e){
-let r=new FileReader();
-r.onload=ev=>{
-preview.src=ev.target.result;
-preview.style.display="block";
-};
-r.readAsDataURL(e.target.files[0]);
-}
-  
-/* LOAD DATA */
+/* LOAD */
 async function load(){
-let res = await fetch(URL);
-data = await res.json();
+let res=await fetch(URL);
+data=await res.json();
 render();
 kpi();
 }
 
-/* ADD */
-async function add(){
+/* SAVE */
+async function save(){
 
-let obj = {
-action:"add",
-id:Date.now(),
-name:s_name.value,
-job:s_job.value,
-section:s_section.value,
-pagi:"Hadir",
-petang:"Hadir",
-note:"",
-photo:preview.src||""
+let obj={
+action:editId?"update":"add",
+id:editId||Date.now(),
+name:name.value,
+job:job.value,
+section:section.value,
+pagi:pagi.value,
+petang:petang.value,
+note:note.value,
+photo:""
 };
 
 await fetch(URL,{
 method:"POST",
-headers:{ "Content-Type":"application/json" },
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify(obj)
 });
 
+editId=null;
+closeForm();
 load();
 }
 
 /* DELETE */
 async function del(id){
-
 if(currentUser.role!="admin")return;
 
 await fetch(URL,{
 method:"POST",
-headers:{ "Content-Type":"application/json" },
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({action:"delete",id})
 });
 
 load();
 }
 
-/* EDIT SAVE */
-async function saveStaff(){
-
-if(editId){
-
-await fetch(URL,{
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({
-action:"update",
-id:editId,
-name:s_name.value,
-job:s_job.value,
-section:s_section.value,
-pagi:s_pagi.value,
-petang:s_petang.value,
-note:s_note.value,
-photo:preview.src||""
-})
-});
-
-editId=null;
-
-}else{
-
-await add();
-}
-
-closeForm();
-load();
-}
-
-/* EDIT */
-function edit(id){
-if(currentUser.role!="admin")return;
-
-let s=data.find(x=>x.id==id);
-editId=id;
-
-s_name.value=s.name;
-s_job.value=s.job;
-s_section.value=s.section;
-s_pagi.value=s.pagi;
-s_petang.value=s.petang;
-s_note.value=s.note;
-
-staffForm.style.display="block";
-}
-
 /* RENDER */
 function render(){
 
-let filter=sortDept.value;
+let filter=document.getElementById("filter").value;
 
-let filtered = data;
+let list=data;
 if(filter!="all"){
-filtered = data.filter(x=>x.section==filter);
+list=list.filter(x=>x.section==filter);
 }
 
 let h="";
 
-filtered.forEach(s=>{
-let st=status(s);
+list.forEach(s=>{
 
 h+=`
 <tr>
-<td>${s.photo?`<img class="avatar" src="${s.photo}">`:"-"}</td>
 <td>${s.name}</td>
 <td>${s.job}</td>
 <td>${s.section}</td>
-<td>${s.pagi}</td>
-<td>${s.petang}</td>
-<td>${s.note||"-"}</td>
-<td><span class="status ${st[1]}">${st[0]}</span></td>
+<td>${s.pagi}/${s.petang}</td>
 <td>
-${currentUser.role=="admin"?
-`<button class="btn-edit" onclick="edit(${s.id})">Edit</button>
-<button class="btn-del" onclick="del(${s.id})">Del</button>`:""}
+${currentUser.role=="admin"
+?`<button class="btn edit" onclick="edit(${s.id})">Edit</button>
+<button class="btn del" onclick="del(${s.id})">Del</button>`:""}
 </td>
 </tr>`;
 });
 
-report.innerHTML=h;
+tb.innerHTML=h;
 }
 
-/* STATUS */
-function status(s){
-if(s.pagi=="Cuti"&&s.petang=="Cuti")return["CUTI","cuti"];
-if(s.pagi=="Tiada"&&s.petang=="Tiada")return["TIADA","tiada"];
-if(s.pagi=="Urusan")return["URUSAN","urusan"];
-return["HADIR","hadir"];
+/* EDIT */
+function edit(id){
+let s=data.find(x=>x.id==id);
+editId=id;
+
+name.value=s.name;
+job.value=s.job;
+section.value=s.section;
+pagi.value=s.pagi;
+petang.value=s.petang;
+note.value=s.note;
+
+openForm();
 }
 
-/* SYNC BUTTON */
-function syncData(){
-if(currentUser.role!="admin")return;
-alert("Already synced with Google Sheets");
+/* KPI */
+function kpi(){
+let h=0,c=0,t=0,u=0;
+
+data.forEach(s=>{
+if(s.pagi=="Hadir"||s.petang=="Hadir")h++;
+if(s.pagi=="Cuti"&&s.petang=="Cuti")c++;
+if(s.pagi=="Tiada"&&s.petang=="Tiada")t++;
+if(s.pagi=="Urusan")u++;
+});
+
+kpiHadir.innerText=h;
+kpiCuti.innerText=c;
+kpiTiada.innerText=t;
+kpiUrusan.innerText=u;
+}
+
+/* UI */
+function openForm(){formBox.style.display="block";}
+function closeForm(){formBox.style.display="none";}
+
+/* SYNC */
+function sync(){
+alert("Synced with Google Sheets");
+}
+
+/* LOGO */
+function changeLogo(){
+let input=document.createElement("input");
+input.type="file";
+input.onchange=e=>{
+let r=new FileReader();
+r.onload=ev=>logo.src=ev.target.result;
+r.readAsDataURL(e.target.files[0]);
+};
+input.click();
 }
 
 /* INIT */
 load();
-  
+
 </script>
+
 </body>
 </html>
