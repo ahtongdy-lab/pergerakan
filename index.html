@@ -9,7 +9,6 @@
 *{box-sizing:border-box;}
 body{margin:0;font-family:Segoe UI;background:#0f172a;color:white;}
 
-/* HEADER */
 header{
 display:flex;justify-content:space-between;align-items:center;
 padding:15px;background:#0b1220;flex-wrap:wrap;
@@ -18,21 +17,19 @@ padding:15px;background:#0b1220;flex-wrap:wrap;
 .logoBox{display:flex;align-items:center;gap:12px;}
 .logoBox img{width:55px;height:55px;background:white;padding:5px;border-radius:10px;cursor:pointer;}
 
-.titleBox h2{margin:0;font-size:26px;font-weight:900;}
+.titleBox h2{margin:0;font-size:26px;}
 .titleBox p{margin:0;color:#cbd5e1;}
 
-#clock{font-size:32px;font-weight:800;}
+#clock{font-size:32px;}
 #date{font-size:18px;color:#cbd5e1;}
 
-/* KPI */
 .kpiBox{display:flex;gap:10px;padding:10px;flex-wrap:wrap;}
-.kpi{flex:1;padding:12px;border-radius:10px;text-align:center;font-weight:bold;}
+.kpi{flex:1;padding:10px;border-radius:10px;text-align:center;font-weight:bold;}
 .green{background:#16a34a;}
 .yellow{background:#f59e0b;color:black;}
 .red{background:#ef4444;}
 .blue{background:#3b82f6;}
 
-/* LOGIN */
 #loginBox{
 display:flex;flex-direction:column;align-items:center;
 justify-content:center;height:80vh;gap:10px;
@@ -42,29 +39,55 @@ input,button,select,textarea{
 padding:10px;border-radius:10px;border:none;width:220px;
 }
 
-/* TOPBAR */
+/* TOP BAR */
 .topBar{
-display:none;padding:10px;gap:10px;background:#111827;flex-wrap:wrap;
+display:none;
+padding:10px;
+gap:10px;
+background:#111827;
+flex-wrap:wrap;
 }
+
+/* FILTER */
+.sectionScroll{
+display:flex;
+overflow-x:auto;
+gap:10px;
+padding:10px;
+background:#0b1220;
+}
+
+.sectionBtn{
+padding:8px 14px;
+border-radius:20px;
+background:#1f2937;
+cursor:pointer;
+flex:0 0 auto;
+}
+
+.sectionBtn.active{background:#3b82f6;}
 
 /* TABLE */
 .tableWrap{padding:10px;overflow:auto;}
 
 table{
-width:100%;min-width:1200px;
-background:#1f2937;border-collapse:collapse;font-size:16px;
+width:100%;
+min-width:1300px;
+background:#1f2937;
+border-collapse:collapse;
+font-size:16px;
 }
 
 th,td{
-padding:12px;text-align:center;border-bottom:1px solid #374151;
+padding:12px;
+text-align:center;
+border-bottom:1px solid #374151;
 }
 
 th{background:#111827;}
 
-img.avatar{width:45px;height:45px;border-radius:50%;object-fit:cover;}
-
-textarea.noteEdit{
-width:160px;height:60px;
+img.avatar{
+width:45px;height:45px;border-radius:50%;object-fit:cover;
 }
 
 /* STATUS */
@@ -73,28 +96,23 @@ width:160px;height:60px;
 .status.tiada{background:#ef4444;padding:5px;border-radius:10px;}
 .status.urusan{background:#3b82f6;padding:5px;border-radius:10px;}
 
-/* POPUP */
+/* FORM */
 #staffForm{
 display:none;
 position:fixed;
 top:50%;left:50%;
-transform:translate(-50%,-50%) scale(0.8);
+transform:translate(-50%,-50%);
 background:#111827;
 padding:20px;
 border-radius:10px;
-opacity:0;
-transition:0.25s ease;
-}
-
-#staffForm.show{
-display:block;
-opacity:1;
-transform:translate(-50%,-50%) scale(1);
+z-index:999;
 }
 
 #preview{
-width:60px;height:60px;border-radius:50%;
-display:none;margin:auto;
+width:60px;height:60px;
+border-radius:50%;
+display:none;
+margin:auto;
 }
 
 </style>
@@ -104,16 +122,16 @@ display:none;margin:auto;
 
 <header>
 <div class="logoBox">
-<img id="mainLogo" src="logo_mds.png" onclick="addLogo()">
-<div class="titleBox">
+<img id="mainLogo" src="logo_mds.png">
+<div>
 <h2>MAJLIS DAERAH SIMUNJAN</h2>
 <p>Smart Attendance System</p>
 </div>
 </div>
 
 <div>
-<div id="clock">--:--</div>
-<div id="date">---</div>
+<div id="clock"></div>
+<div id="date"></div>
 </div>
 </header>
 
@@ -133,15 +151,32 @@ display:none;margin:auto;
 
 <div class="topBar">
 <button onclick="openForm()">+ Staf</button>
+<button onclick="addLogo()">Add Logo</button>
 <button onclick="syncToSheet()">Sync</button>
 <button onclick="window.print()">Print</button>
 <button onclick="logout()">Log Off</button>
+
+<input type="file" id="logoInput" hidden onchange="changeLogo(event)">
 </div>
+
+<!-- FILTER BAHAGIAN -->
+<div class="sectionScroll" id="sectionMenu"></div>
 
 <!-- FORM -->
 <div id="staffForm">
 <input id="s_name" placeholder="Nama">
 <input id="s_job" placeholder="Jawatan">
+
+<select id="s_section">
+<option>Khidmat Pengurusan</option>
+<option>Kewangan</option>
+<option>Komuniti</option>
+<option>Penguat Kuasa</option>
+<option>Kejuruteraan Awam</option>
+<option>Kesihatan Awam</option>
+<option>Perpustakaan</option>
+<option>Penilaian</option>
+</select>
 
 <select id="s_pagi">
 <option>Hadir</option><option>Cuti</option><option>Tiada</option><option>Urusan</option>
@@ -151,7 +186,9 @@ display:none;margin:auto;
 <option>Hadir</option><option>Cuti</option><option>Tiada</option><option>Urusan</option>
 </select>
 
-<input type="file" id="s_photo" onchange="previewImage(event)">
+<!-- 📷 PHOTO (ADMIN ONLY) -->
+<label>Photo Pegawai (Admin)</label>
+<input type="file" id="s_photo" onchange="previewPhoto(event)">
 <img id="preview">
 
 <textarea id="s_note"></textarea>
@@ -168,6 +205,7 @@ display:none;margin:auto;
 <th>Foto</th>
 <th>Nama</th>
 <th>Jawatan</th>
+<th>Bahagian</th>
 <th>Pagi</th>
 <th>Petang</th>
 <th>Catatan</th>
@@ -181,11 +219,11 @@ display:none;margin:auto;
 
 <script>
 
-/* 🔗 GOOGLE SHEET API */
-const scriptURL = "https://script.google.com/macros/s/AKfycbz6xfBzLUMEVNST8042mAyVymyJK0_qgQYFtaXaucoZdREm0RuWBSMFixaXZ6p4TY781w/exec";
+const scriptURL="YOUR_GOOGLE_APPS_SCRIPT_URL";
 
 let staff=[];
 let currentUser=null;
+let activeSection="ALL";
 let editId=null;
 
 /* CLOCK */
@@ -197,29 +235,36 @@ date.innerText=n.toLocaleDateString("ms-MY",{weekday:"long",day:"numeric",month:
 
 /* LOAD */
 function loadSheet(){
-fetch(scriptURL)
-.then(r=>r.json())
-.then(data=>{
+fetch(scriptURL).then(r=>r.json()).then(data=>{
 staff=data.slice(1).map(r=>({
 id:Number(r[0]),
 name:r[1],
 job:r[2],
-pagi:r[3],
-petang:r[4],
-note:r[5],
-photo:r[6]
+section:r[3],
+pagi:r[4],
+petang:r[5],
+note:r[6],
+photo:r[7]
 }));
-render();updateKPI();
+
+buildSectionMenu();
+render();
+updateKPI();
 });
 }
 
-/* SYNC */
-function syncToSheet(){
-fetch(scriptURL,{
-method:"POST",
-body:JSON.stringify(staff)
+/* FILTER MENU */
+function buildSectionMenu(){
+let list=["ALL",...new Set(staff.map(s=>s.section))];
+sectionMenu.innerHTML="";
+
+list.forEach(sec=>{
+let d=document.createElement("div");
+d.className="sectionBtn"+(activeSection==sec?" active":"");
+d.innerText=sec;
+d.onclick=()=>{activeSection=sec;render();buildSectionMenu();};
+sectionMenu.appendChild(d);
 });
-alert("Data disimpan ke Google Sheet");
 }
 
 /* LOGIN */
@@ -236,30 +281,23 @@ loginBox.style.display="none";
 loadSheet();
 }
 
-/* LOG OFF */
-function logout(){
-location.reload();
-}
+function logout(){location.reload();}
 
-/* LOGO */
+/* 🖼️ ADD LOGO (ADMIN ONLY) */
 function addLogo(){
-if(currentUser.role!="admin") return;
-alert("Upload logo feature");
+if(currentUser.role!="admin"){alert("Admin sahaja");return;}
+logoInput.click();
 }
 
-/* FORM */
-function openForm(){
-if(currentUser.role!="admin") return;
-staffForm.classList.add("show");
+function changeLogo(e){
+let r=new FileReader();
+r.onload=ev=>mainLogo.src=ev.target.result;
+r.readAsDataURL(e.target.files[0]);
 }
 
-function closeForm(){
-staffForm.classList.remove("show");
-resetForm();
-}
-
-/* PREVIEW IMAGE */
-function previewImage(e){
+/* 📷 PHOTO PREVIEW */
+function previewPhoto(e){
+if(currentUser.role!="admin"){alert("Admin sahaja");return;}
 let r=new FileReader();
 r.onload=ev=>{
 preview.src=ev.target.result;
@@ -268,49 +306,47 @@ preview.style.display="block";
 r.readAsDataURL(e.target.files[0]);
 }
 
-/* RESET FORM */
+/* FORM */
+function openForm(){
+if(currentUser.role!="admin")return;
+staffForm.style.display="block";
+}
+
+function closeForm(){
+staffForm.style.display="none";
+resetForm();
+}
+
 function resetForm(){
 s_name.value="";
 s_job.value="";
+s_section.value="Khidmat Pengurusan";
 s_pagi.value="Hadir";
 s_petang.value="Hadir";
 s_note.value="";
 s_photo.value="";
-preview.src="";
 preview.style.display="none";
 editId=null;
 }
 
 /* SAVE */
 function saveStaff(){
-
-if(currentUser.role!="admin") return;
+if(currentUser.role!="admin")return;
 
 let file=s_photo.files[0];
 
 let save=(img)=>{
 
-if(editId){
-let i=staff.findIndex(s=>s.id==editId);
-staff[i]={...staff[i],
-name:s_name.value,
-job:s_job.value,
-pagi:s_pagi.value,
-petang:s_petang.value,
-note:s_note.value,
-photo:img||staff[i].photo
-};
-}else{
 staff.push({
 id:Date.now(),
 name:s_name.value,
 job:s_job.value,
+section:s_section.value,
 pagi:s_pagi.value,
 petang:s_petang.value,
 note:s_note.value,
 photo:img||""
 });
-}
 
 render();
 updateKPI();
@@ -327,9 +363,8 @@ r.readAsDataURL(file);
 
 /* DELETE */
 function deleteStaff(id){
-if(currentUser.role!="admin") return;
-
-if(confirm("Padam staf ini?")){
+if(currentUser.role!="admin")return;
+if(confirm("Padam data?")){
 staff=staff.filter(s=>s.id!=id);
 render();
 updateKPI();
@@ -338,49 +373,31 @@ updateKPI();
 
 /* EDIT */
 function editStaff(id){
+if(currentUser.role!="admin")return;
+
 let s=staff.find(x=>x.id==id);
 editId=id;
 
 s_name.value=s.name;
 s_job.value=s.job;
+s_section.value=s.section;
 s_pagi.value=s.pagi;
 s_petang.value=s.petang;
-s_note.value=s.note||"";
-
-if(s.photo){
-preview.src=s.photo;
-preview.style.display="block";
-}
+s_note.value=s.note;
 
 openForm();
-}
-
-/* KPI */
-function updateKPI(){
-let h=0,c=0,t=0,u=0;
-
-staff.forEach(s=>{
-if(s.pagi=="Hadir")h++;
-if(s.pagi=="Cuti"&&s.petang=="Cuti")c++;
-if(s.pagi=="Tiada"&&s.petang=="Tiada")t++;
-if(s.pagi=="Urusan")u++;
-});
-
-kpiHadir.innerText=h;
-kpiCuti.innerText=c;
-kpiTiada.innerText=t;
-kpiUrusan.innerText=u;
 }
 
 /* RENDER */
 function render(){
 
+let list=activeSection=="ALL"?staff:staff.filter(s=>s.section==activeSection);
+
 let html="";
 
-staff.forEach(s=>{
+list.forEach(s=>{
 
 let status="HADIR",cls="hadir";
-
 if(s.pagi=="Cuti"&&s.petang=="Cuti"){status="CUTI";cls="cuti";}
 else if(s.pagi=="Tiada"&&s.petang=="Tiada"){status="TIADA";cls="tiada";}
 else if(s.pagi=="Urusan"){status="URUSAN";cls="urusan";}
@@ -390,19 +407,38 @@ html+=`
 <td>${s.photo?`<img class="avatar" src="${s.photo}">`:"-"}</td>
 <td>${s.name}</td>
 <td>${s.job}</td>
+<td>${s.section}</td>
 <td>${s.pagi}</td>
 <td>${s.petang}</td>
 <td>${s.note||"-"}</td>
 <td><span class="status ${cls}">${status}</span></td>
 <td>
 ${currentUser.role=="admin"
-?`<button onclick="editStaff(${s.id})">Edit</button><button onclick="deleteStaff(${s.id})">Del</button>`
-:""}
+?`<button onclick="editStaff(${s.id})">Edit</button>
+<button onclick="deleteStaff(${s.id})">Del</button>`
+:"-"}
 </td>
 </tr>`;
 });
 
 report.innerHTML=html;
+}
+
+/* KPI */
+function updateKPI(){
+let h=0,c=0,t=0,u=0;
+
+staff.forEach(s=>{
+if(s.pagi=="Hadir")h++;
+if(s.pagi=="Cuti"&&s.petang=="Cuti")c++;
+if(s.pagi=="Tiada")t++;
+if(s.pagi=="Urusan")u++;
+});
+
+kpiHadir.innerText=h;
+kpiCuti.innerText=c;
+kpiTiada.innerText=t;
+kpiUrusan.innerText=u;
 }
 
 </script>
