@@ -228,6 +228,64 @@ let data = [];
 let currentUser={role:"guest"};
 let editId=null;
 
+function login(){
+
+currentUser = (user.value=="admin" && pass.value=="123")
+? {role:"admin"}
+: {role:"guest"};
+
+document.getElementById("loginBox").style.display="none";
+document.querySelector(".topBar").style.display="flex";
+
+btnLogo.style.display = currentUser.role=="admin" ? "inline-block" : "none";
+btnSync.style.display = currentUser.role=="admin" ? "inline-block" : "none";
+
+load();
+}
+
+function guestLogin(){
+
+currentUser={role:"guest"};
+
+document.getElementById("loginBox").style.display="none";
+document.querySelector(".topBar").style.display="flex";
+
+btnLogo.style.display="none";
+btnSync.style.display="none";
+
+load();
+}
+
+function logout(){
+location.reload();
+}
+
+function openForm(){
+staffForm.style.display="block";
+}
+
+function closeForm(){
+staffForm.style.display="none";
+resetForm();
+}
+
+function resetForm(){
+s_name.value="";
+s_job.value="";
+s_note.value="";
+preview.style.display="none";
+editId=null;
+}
+
+function previewPhoto(e){
+let r=new FileReader();
+r.onload=ev=>{
+preview.src=ev.target.result;
+preview.style.display="block";
+};
+r.readAsDataURL(e.target.files[0]);
+}
+  
 /* LOAD DATA */
 async function load(){
 let res = await fetch(URL);
