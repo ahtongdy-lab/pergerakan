@@ -262,15 +262,31 @@ load();
 }
 
 /* 🔥 STATUS LOGIC FIXED */
-function statusBadge(pagi,petang){
+function statusBadge(pagi, petang){
 
-let status="SEPARA";
+let status = "HADIR";
 
-if(pagi=="Hadir" && petang=="Hadir") status="HADIR";
-else if(pagi=="Cuti" && petang=="Cuti") status="CUTI";
-else if(pagi=="Tiada" && petang=="Tiada") status="TIADA";
-else if(pagi=="Urusan" || petang=="Urusan") status="URUSAN RASMI";
+/* TIADA paling kuat bila dua-dua TIADA */
+if(pagi=="Tiada" && petang=="Tiada"){
+status = "TIADA";
+}
 
+/* URUSAN override apa-apa */
+else if(pagi=="Urusan" || petang=="Urusan"){
+status = "URUSAN RASMI";
+}
+
+/* CUTI hanya jika dua-dua CUTI */
+else if(pagi=="Cuti" && petang=="Cuti"){
+status = "CUTI";
+}
+
+/* selain semua kes di atas = HADIR (default rules kau) */
+else{
+status = "HADIR";
+}
+
+/* class warna */
 let cls="";
 if(status=="HADIR") cls="hadir";
 if(status=="CUTI") cls="cuti";
