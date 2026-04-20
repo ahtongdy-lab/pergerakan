@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<title>MDS Smart Attendance (Stable Version)</title>
+<title>MDS Smart Attendance</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -28,7 +28,6 @@ th{background:#111827;}
 .edit{background:#3b82f6;color:white;}
 .del{background:#ef4444;color:white;}
 .sync{background:#22c55e;color:white;}
-.logoBtn{background:#10b981;color:white;}
 #formBox{
 display:none;
 position:fixed;
@@ -39,6 +38,30 @@ padding:20px;
 border-radius:10px;
 z-index:999;
 }
+.preview{
+width:80px;height:80px;
+border-radius:10px;
+object-fit:cover;
+margin-top:5px;
+}
+.table-photo{
+width:45px;height:45px;
+border-radius:8px;
+object-fit:cover;
+}
+
+.status{
+padding:6px 10px;
+border-radius:10px;
+font-size:15px;
+font-weight:bold;
+display:inline-block;
+}
+
+.hadir{background:#16a34a;}
+.cuti{background:#f59e0b;color:black;}
+.tiada{background:#ef4444;}
+.urusan{background:#3b82f6;}
 </style>
 </head>
 
@@ -91,12 +114,11 @@ z-index:999;
 <button class="sync" onclick="sync()">Sync</button>
 <button onclick="window.print()">Print</button>
 <button onclick="logout()">Log Out</button>
-
-<button id="logoBtn" class="logoBtn" style="display:none" onclick="changeLogo()">Add Logo</button>
 </div>
 
 <!-- FORM -->
 <div id="formBox">
+
 <input id="name" placeholder="Nama">
 <input id="job" placeholder="Jawatan">
 
@@ -121,16 +143,23 @@ z-index:999;
 
 <textarea id="note"></textarea>
 
+<input type="file" id="photoInput">
+<img id="preview" class="preview" style="display:none">
+
 <button onclick="save()">Simpan</button>
 <button onclick="closeForm()">Tutup</button>
+
 </div>
 
 <table>
 <thead>
 <tr>
+<th>Photo</th>
 <th>Nama</th>
 <th>Jawatan</th>
 <th>Bahagian</th>
+<th>Pagi</th>
+<th>Petang</th>
 <th>Status</th>
 <th>Aksi</th>
 </tr>
@@ -140,46 +169,35 @@ z-index:999;
 
 <script>
 
-const URL = "https://script.google.com/macros/s/AKfycbyF1BRO95ZCj-ZYkyCGpEynwBeJkcOfRqzxwiyMOxFNUMNlNICTUvkNvb3xNlyN7cNZjw/exec";
-
-/* FIX: no more global DOM dependency */
-const clockEl = document.getElementById("clock");
-const dateEl = document.getElementById("date");
-const userEl = document.getElementById("user");
-const passEl = document.getElementById("pass");
-const formBoxEl = document.getElementById("formBox");
-const logoEl = document.getElementById("logo");
+const URL="https://script.google.com/macros/s/AKfycbyF1BRO95ZCj-ZYkyCGpEynwBeJkcOfRqzxwiyMOxFNUMNlNICTUvkNvb3xNlyN7cNZjw/exec";
+const SECRET="mds123";
 
 let data=[];
-let currentUser={role:"guest"};
 let editId=null;
+let currentUser={role:"guest"};
+let photoBase64="";
 
-/* CLOCK FIXED */
+const el=id=>document.getElementById(id);
+
+/* CLOCK */
 setInterval(()=>{
-clockEl.innerText=new Date().toLocaleTimeString();
-dateEl.innerText=new Date().toLocaleDateString();
+el("clock").innerText=new Date().toLocaleTimeString();
+el("date").innerText=new Date().toLocaleDateString();
 },1000);
 
-/* LOGIN FIXED */
+/* LOGIN */
 function login(){
-if(userEl.value=="admin" && passEl.value=="123"){
-currentUser={role:"admin"};
-}else{
-currentUser={role:"guest"};
-}
+currentUser=(el("user").value=="admin" && el("pass").value=="123")
+?{role:"admin"}:{role:"guest"};
 
-document.getElementById("loginBox").style.display="none";
+el("loginBox").style.display="none";
 document.querySelector(".topBar").style.display="flex";
-
-document.getElementById("logoBtn").style.display=
-currentUser.role=="admin"?"inline-block":"none";
-
 load();
 }
 
 function guest(){
 currentUser={role:"guest"};
-document.getElementById("loginBox").style.display="none";
+el("loginBox").style.display="none";
 document.querySelector(".topBar").style.display="flex";
 load();
 }
@@ -194,71 +212,98 @@ render();
 kpi();
 }
 
-/* SAVE FIXED (ADD SECRET) */
+/* PHOTO */
+el("photoInput").addEventListener("change",e=>{
+let f=e.target.files[0];
+if(!f)return;
+
+let r=new FileReader();
+r.onload=ev=>{
+photoBase64=ev.target.result;
+el("preview").src=photoBase64;
+el("preview").style.display="block";
+};
+r.readAsDataURL(f);
+});
+
+/* SAVE */
 async function save(){
 
 let obj={
 action:editId?"update":"add",
 id:editId||Date.now(),
-name:name.value,
-job:job.value,
-section:section.value,
-pagi:pagi.value,
-petang:petang.value,
-note:note.value,
-photo:"",
-secret:"mds123"
+name:el("name").value,
+job:el("job").value,
+section:el("section").value,
+pagi:el("pagi").value,
+petang:el("petang").value,
+note:el("note").value,
+photo:photoBase64,
+secret:SECRET
 };
 
-await fetch(URL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(obj)
-});
+await fetch(URL,{method:"POST",body:JSON.stringify(obj)});
 
 editId=null;
+photoBase64="";
+el("preview").style.display="none";
+el("photoInput").value="";
+
 closeForm();
 load();
 }
 
-/* DELETE FIXED (ADD SECRET) */
+/* DELETE */
 async function del(id){
-
 if(currentUser.role!="admin")return;
 
-await fetch(URL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-action:"delete",
-id,
-secret:"mds123"
-})
-});
-
+await fetch(URL,{method:"POST",body:JSON.stringify({action:"delete",id,secret:SECRET})});
 load();
 }
 
-/* RENDER (SAFE EDIT FIX) */
+/* 🔥 STATUS LOGIC FIXED */
+function statusBadge(pagi,petang){
+
+let status="";
+
+if(pagi=="Hadir" && petang=="Cuti") status="HADIR";
+else if(pagi=="Tiada" && petang=="Tiada") status="TIADA";
+else if(pagi=="Urusan" || petang=="Urusan") status="URUSAN RASMI";
+else status="URUSAN RASMI";
+
+let cls="";
+if(status=="HADIR") cls="hadir";
+if(status=="TIADA") cls="tiada";
+if(status=="URUSAN RASMI") cls="urusan";
+
+return `<span class="status ${cls}">${status}</span>`;
+}
+
+/* RENDER */
 function render(){
 
-let filter=document.getElementById("filter").value;
-
+let filter=el("filter").value;
 let list=data;
-if(filter!="all"){
-list=list.filter(x=>x.section==filter);
-}
+
+if(filter!="all") list=list.filter(x=>x.section==filter);
 
 let h="";
 
 list.forEach(s=>{
 
+let img=s.photo
+?`<img src="${s.photo}" class="table-photo">`
+:`<div style="width:45px;height:45px;background:#374151;border-radius:8px;"></div>`;
+
 h+=`
 <tr>
-<td>${s.name}</td>
-<td>${s.job}</td>
-<td>${s.section}</td>
-<td>${s.pagi}/${s.petang}</td>
+<td>${img}</td>
+<td>${s.name||""}</td>
+<td>${s.job||""}</td>
+<td>${s.section||""}</td>
+<td>${s.pagi||""}</td>
+<td>${s.petang||""}</td>
+<td>${statusBadge(s.pagi,s.petang)}</td>
 <td>
 ${currentUser.role=="admin"
 ?`<button class="btn edit" onclick="edit(${s.id})">Edit</button>
@@ -267,27 +312,33 @@ ${currentUser.role=="admin"
 </tr>`;
 });
 
-tb.innerHTML=h;
+el("tb").innerHTML=h;
 }
 
-/* EDIT FIX SAFE */
+/* EDIT */
 function edit(id){
 let s=data.find(x=>String(x.id)==String(id));
-if(!s) return alert("Data tidak jumpa");
+if(!s)return;
 
 editId=id;
 
-name.value=s.name||"";
-job.value=s.job||"";
-section.value=s.section||"";
-pagi.value=s.pagi||"";
-petang.value=s.petang||"";
-note.value=s.note||"";
+el("name").value=s.name||"";
+el("job").value=s.job||"";
+el("section").value=s.section||"";
+el("pagi").value=s.pagi||"";
+el("petang").value=s.petang||"";
+el("note").value=s.note||"";
+
+photoBase64=s.photo||"";
+if(photoBase64){
+el("preview").src=photoBase64;
+el("preview").style.display="block";
+}
 
 openForm();
 }
 
-/* KPI FIX */
+/* KPI */
 function kpi(){
 let h=0,c=0,t=0,u=0;
 
@@ -298,36 +349,18 @@ if(s.pagi=="Tiada"&&s.petang=="Tiada")t++;
 if(s.pagi=="Urusan")u++;
 });
 
-kpiHadir.innerText=h;
-kpiCuti.innerText=c;
-kpiTiada.innerText=t;
-kpiUrusan.innerText=u;
+el("kpiHadir").innerText=h;
+el("kpiCuti").innerText=c;
+el("kpiTiada").innerText=t;
+el("kpiUrusan").innerText=u;
 }
 
 /* UI */
-function openForm(){formBoxEl.style.display="block";}
-function closeForm(){formBoxEl.style.display="none";}
+function openForm(){el("formBox").style.display="block";}
+function closeForm(){el("formBox").style.display="none";}
 
-/* SYNC REAL */
-async function sync(){
-await load();
-alert("Data updated");
-}
-
-/* LOGO */
-function changeLogo(){
-let input=document.createElement("input");
-input.type="file";
-input.onchange=e=>{
-let r=new FileReader();
-r.onload=ev=>logoEl.src=ev.target.result;
-r.readAsDataURL(e.target.files[0]);
-};
-input.click();
-}
-
-/* INIT */
-load();
+/* SYNC */
+async function sync(){await load();alert("Synced");}
 
 </script>
 
