@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="ms">
 <head>
 <meta charset="UTF-8">
-<title>MDS Smart Attendance</title>
+<title>CARTA PERGERAKAN PEGAWAI MDS</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -28,6 +29,7 @@ th{background:#111827;}
 .edit{background:#3b82f6;color:white;}
 .del{background:#ef4444;color:white;}
 .sync{background:#22c55e;color:white;}
+
 #formBox{
 display:none;
 position:fixed;
@@ -35,15 +37,52 @@ top:50%;left:50%;
 transform:translate(-50%,-50%);
 background:#111827;
 padding:20px;
-border-radius:10px;
+border-radius:12px;
 z-index:999;
+width:380px;
+max-width:92%;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
+
+#formBox h3{
+margin:0 0 15px 0;
+text-align:center;
+}
+
+.formGrid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+}
+
+.field{
+display:flex;
+flex-direction:column;
+gap:5px;
+}
+
+label{
+font-size:12px;
+color:#cbd5e1;
+}
+
+.formGrid input,
+.formGrid select,
+.formGrid textarea{
+width:100%;
+}
+
+.formFull{
+grid-column:1 / span 2;
+}
+
 .preview{
 width:80px;height:80px;
 border-radius:10px;
 object-fit:cover;
 margin-top:5px;
 }
+
 .table-photo{
 width:45px;height:45px;
 border-radius:8px;
@@ -62,10 +101,58 @@ display:inline-block;
 .cuti{background:#f59e0b;color:black;}
 .tiada{background:#ef4444;}
 .urusan{background:#3b82f6;}
+
+#loading{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.7);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:9999;
+display:none;
+}
+
+.loader{
+border:6px solid #374151;
+border-top:6px solid #22c55e;
+border-radius:50%;
+width:60px;
+height:60px;
+animation:spin 1s linear infinite;
+margin-bottom:15px;
+}
+
+.progress-text{
+font-size:18px;
+font-weight:bold;
+color:#e5e7eb;
+}
+
+.loading-msg{
+margin-top:10px;
+font-size:14px;
+color:#cbd5e1;
+text-align:center;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
 </style>
+
 </head>
 
 <body>
+
+<div id="loading">
+<div class="loader"></div>
+<div class="progress-text" id="progressText">0%</div>
+<div class="loading-msg">Loading data in progress, please wait.</div>
+</div>
 
 <header>
 <div class="logoBox">
@@ -97,7 +184,8 @@ display:inline-block;
 </div>
 
 <div class="topBar">
-<button onclick="openForm()">+ Staf</button>
+
+<button onclick="openForm()">➕ Tambah Staf</button>
 
 <select id="filter" onchange="render()">
 <option value="all">Semua Bahagian</option>
@@ -111,17 +199,29 @@ display:inline-block;
 <option>Kewangan</option>
 </select>
 
-<button class="sync" onclick="sync()">Sync</button>
-<button onclick="window.print()">Print</button>
+<button class="sync" onclick="sync()">Sync</button> 
+<button onclick="window.print()">Print</button> 
 <button onclick="logout()">Log Out</button>
+
 </div>
 
-<!-- FORM -->
 <div id="formBox">
+<h3>Tambah / Edit Staf</h3>
 
-<input id="name" placeholder="Nama">
-<input id="job" placeholder="Jawatan">
+<div class="formGrid">
 
+<div class="field">
+<label>Nama</label>
+<input id="name" placeholder="Masukkan nama">
+</div>
+
+<div class="field">
+<label>Jawatan</label>
+<input id="job" placeholder="Masukkan jawatan">
+</div>
+
+<div class="field">
+<label>Bahagian</label>
 <select id="section">
 <option>Khidmat Pengurusan</option>
 <option>Komuniti</option>
@@ -132,23 +232,47 @@ display:inline-block;
 <option>Perpustakaan</option>
 <option>Kewangan</option>
 </select>
+</div>
 
+<div></div>
+
+<div class="field">
+<label>Pagi</label>
 <select id="pagi">
-<option>Hadir</option><option>Cuti</option><option>Tiada</option><option>Urusan</option>
+<option>Hadir</option>
+<option>Cuti</option>
+<option>Tiada</option>
+<option>Urusan</option>
 </select>
+</div>
 
+<div class="field">
+<label>Petang</label>
 <select id="petang">
-<option>Hadir</option><option>Cuti</option><option>Tiada</option><option>Urusan</option>
+<option>Hadir</option>
+<option>Cuti</option>
+<option>Tiada</option>
+<option>Urusan</option>
 </select>
+</div>
 
-<textarea id="note"></textarea>
+<div class="field formFull">
+<label>Nota</label>
+<textarea id="note" placeholder="Masukkan nota"></textarea>
+</div>
 
+<div class="field formFull">
+<label>Gambar</label>
 <input type="file" id="photoInput">
 <img id="preview" class="preview" style="display:none">
+</div>
 
+<div class="formFull" style="display:flex;gap:10px;justify-content:center;margin-top:10px;">
 <button onclick="save()">Simpan</button>
 <button onclick="closeForm()">Tutup</button>
+</div>
 
+</div>
 </div>
 
 <table>
@@ -179,13 +303,60 @@ let photoBase64="";
 
 const el=id=>document.getElementById(id);
 
-/* CLOCK */
+let fakeProgress=0;
+let progressInterval;
+
+function showLoading(){
+el("loading").style.display="flex";
+fakeProgress=0;
+el("progressText").innerText="0%";
+
+progressInterval=setInterval(()=>{
+if(fakeProgress<95){
+fakeProgress+=Math.floor(Math.random()*5)+1;
+el("progressText").innerText=fakeProgress+"%";
+}
+},200);
+}
+
+function hideLoading(){
+clearInterval(progressInterval);
+fakeProgress=100;
+el("progressText").innerText="100%";
+
+setTimeout(()=>{
+el("loading").style.display="none";
+},300);
+}
+
 setInterval(()=>{
 el("clock").innerText=new Date().toLocaleTimeString();
 el("date").innerText=new Date().toLocaleDateString();
 },1000);
 
-/* LOGIN */
+function resetForm(){
+el("name").value="";
+el("job").value="";
+el("section").selectedIndex=0;
+el("pagi").selectedIndex=0;
+el("petang").selectedIndex=0;
+el("note").value="";
+el("photoInput").value="";
+el("preview").style.display="none";
+photoBase64="";
+}
+
+function openForm(){
+resetForm();
+editId=null;
+el("formBox").style.display="block";
+}
+
+function closeForm(){
+el("formBox").style.display="none";
+resetForm();
+}
+
 function login(){
 currentUser=(el("user").value=="admin" && el("pass").value=="123")
 ?{role:"admin"}:{role:"guest"};
@@ -204,15 +375,15 @@ load();
 
 function logout(){location.reload();}
 
-/* LOAD */
 async function load(){
+showLoading();
 let res=await fetch(URL);
 data=await res.json();
 render();
 kpi();
+hideLoading();
 }
 
-/* PHOTO */
 el("photoInput").addEventListener("change",e=>{
 let f=e.target.files[0];
 if(!f)return;
@@ -226,9 +397,7 @@ el("preview").style.display="block";
 r.readAsDataURL(f);
 });
 
-/* SAVE */
 async function save(){
-
 let obj={
 action:editId?"update":"add",
 id:editId||Date.now(),
@@ -244,49 +413,22 @@ secret:SECRET
 
 await fetch(URL,{method:"POST",body:JSON.stringify(obj)});
 
-editId=null;
-photoBase64="";
-el("preview").style.display="none";
-el("photoInput").value="";
-
 closeForm();
 load();
 }
 
-/* DELETE */
 async function del(id){
 if(currentUser.role!="admin")return;
-
 await fetch(URL,{method:"POST",body:JSON.stringify({action:"delete",id,secret:SECRET})});
 load();
 }
 
-/* 🔥 STATUS LOGIC FIXED */
 function statusBadge(pagi, petang){
+let status="HADIR";
+if(pagi=="Tiada" && petang=="Tiada") status="TIADA";
+else if(pagi=="Urusan" || petang=="Urusan") status="URUSAN RASMI";
+else if(pagi=="Cuti" && petang=="Cuti") status="CUTI";
 
-let status = "HADIR";
-
-/* TIADA paling kuat bila dua-dua TIADA */
-if(pagi=="Tiada" && petang=="Tiada"){
-status = "TIADA";
-}
-
-/* URUSAN override apa-apa */
-else if(pagi=="Urusan" || petang=="Urusan"){
-status = "URUSAN RASMI";
-}
-
-/* CUTI hanya jika dua-dua CUTI */
-else if(pagi=="Cuti" && petang=="Cuti"){
-status = "CUTI";
-}
-
-/* selain semua kes di atas = HADIR (default rules kau) */
-else{
-status = "HADIR";
-}
-
-/* class warna */
 let cls="";
 if(status=="HADIR") cls="hadir";
 if(status=="CUTI") cls="cuti";
@@ -296,18 +438,13 @@ if(status=="URUSAN RASMI") cls="urusan";
 return `<span class="status ${cls}">${status}</span>`;
 }
 
-/* RENDER */
 function render(){
-
 let filter=el("filter").value;
 let list=data;
-
 if(filter!="all") list=list.filter(x=>x.section==filter);
 
 let h="";
-
 list.forEach(s=>{
-
 let img=s.photo
 ?`<img src="${s.photo}" class="table-photo">`
 :`<div style="width:45px;height:45px;background:#374151;border-radius:8px;"></div>`;
@@ -332,13 +469,11 @@ ${currentUser.role=="admin"
 el("tb").innerHTML=h;
 }
 
-/* EDIT */
 function edit(id){
 let s=data.find(x=>String(x.id)==String(id));
 if(!s)return;
 
 editId=id;
-
 el("name").value=s.name||"";
 el("job").value=s.job||"";
 el("section").value=s.section||"";
@@ -352,32 +487,29 @@ el("preview").src=photoBase64;
 el("preview").style.display="block";
 }
 
-openForm();
+el("formBox").style.display="block";
 }
 
-/* KPI */
 function kpi(){
 let h=0,c=0,t=0,u=0;
-
 data.forEach(s=>{
 if(s.pagi=="Hadir"&&s.petang=="Hadir")h++;
 if(s.pagi=="Cuti"&&s.petang=="Cuti")c++;
 if(s.pagi=="Tiada"&&s.petang=="Tiada")t++;
-if(s.pagi=="Urusan")u++;
+if(s.pagi=="Urusan"||s.petang=="Urusan")u++;
 });
-
 el("kpiHadir").innerText=h;
 el("kpiCuti").innerText=c;
 el("kpiTiada").innerText=t;
 el("kpiUrusan").innerText=u;
 }
 
-/* UI */
-function openForm(){el("formBox").style.display="block";}
-function closeForm(){el("formBox").style.display="none";}
-
-/* SYNC */
-async function sync(){await load();alert("Synced");}
+async function sync(){
+showLoading();
+await load();
+hideLoading();
+alert("Synced");
+}
 
 </script>
 
