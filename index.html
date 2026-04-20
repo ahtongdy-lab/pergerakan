@@ -210,64 +210,7 @@ object-fit:cover;display:none;margin:auto;
 </div>
 
 <script>
-
 const URL = "https://script.google.com/macros/s/AKfycbzKGAnote2RXMFNUK6DYAxB9sMpDyVn2_o28gZjkEsRAilP1A4v8W0CGQ8vQ7JH7BPi/exec";
-
-let data = [];
-
-async function load(){
-let res = await fetch(URL);
-data = await res.json();
-render();
-}
-
-async function add(){
-
-let obj = {
-action:"add",
-id:Date.now(),
-name:name.value,
-job:job.value,
-section:section.value,
-pagi:"Hadir",
-petang:"Hadir",
-note:"",
-photo:""
-};
-
-await fetch(URL,{
-method:"POST",
-body:JSON.stringify(obj)
-});
-
-load();
-}
-
-async function del(id){
-await fetch(URL,{
-method:"POST",
-body:JSON.stringify({action:"delete",id})
-});
-load();
-}
-
-function render(){
-let h="";
-data.forEach(d=>{
-h+=`
-<tr>
-<td>${d.name}</td>
-<td>${d.job}</td>
-<td>${d.section}</td>
-<td>
-<button class="btn del" onclick="del(${d.id})">Delete</button>
-</td>
-</tr>`;
-});
-tb.innerHTML=h;
-}
-
-load();
 
 const clock=document.getElementById("clock");
 const date=document.getElementById("date");
@@ -281,100 +224,67 @@ const btnLogo=document.getElementById("btnLogo");
 const btnSync=document.getElementById("btnSync");
 const sortDept=document.getElementById("sortDept");
 
-let staff=JSON.parse(localStorage.getItem("staff")||"[]");
+let data = [];
 let currentUser={role:"guest"};
 let editId=null;
 
-/* CLOCK */
-setInterval(()=>{
-clock.innerText=new Date().toLocaleTimeString("ms-MY");
-date.innerText=new Date().toLocaleDateString("ms-MY");
-},1000);
-
-/* LOGIN */
-function login(){
-currentUser=(user.value=="admin"&&pass.value=="123")?{role:"admin"}:{role:"guest"};
-document.getElementById("loginBox").style.display="none";
-document.querySelector(".topBar").style.display="flex";
-
-btnLogo.style.display=currentUser.role=="admin"?"inline-block":"none";
-btnSync.style.display=currentUser.role=="admin"?"inline-block":"none";
-
-render();kpi();
+/* LOAD DATA */
+async function load(){
+let res = await fetch(URL);
+data = await res.json();
+render();
+kpi();
 }
 
-function guestLogin(){
-currentUser={role:"guest"};
-document.getElementById("loginBox").style.display="none";
-document.querySelector(".topBar").style.display="flex";
+/* ADD */
+async function add(){
 
-btnLogo.style.display="none";
-btnSync.style.display="none";
-
-render();kpi();
-}
-
-function logout(){location.reload();}
-
-/* ADD LOGO */
-function addLogo(){
-if(currentUser.role!="admin")return;
-let input=document.createElement("input");
-input.type="file";
-input.onchange=e=>{
-let r=new FileReader();
-r.onload=ev=>mainLogo.src=ev.target.result;
-r.readAsDataURL(e.target.files[0]);
-};
-input.click();
-}
-
-/* SYNC (SIMULATED) */
-function syncData(){
-if(currentUser.role!="admin")return;
-localStorage.setItem("staff",JSON.stringify(staff));
-alert("Data synced!");
-}
-
-/* FORM */
-function openForm(){staffForm.style.display="block";}
-function closeForm(){staffForm.style.display="none";resetForm();}
-
-function resetForm(){
-s_name.value="";
-s_job.value="";
-s_note.value="";
-preview.style.display="none";
-editId=null;
-}
-
-/* PHOTO */
-function previewPhoto(e){
-let r=new FileReader();
-r.onload=ev=>{
-preview.src=ev.target.result;
-preview.style.display="block";
-};
-r.readAsDataURL(e.target.files[0]);
-}
-
-/* SAVE */
-function saveStaff(){
-
-if(editId){
-let i=staff.findIndex(x=>x.id===editId);
-staff[i]={...staff[i],
+let obj = {
+action:"add",
+id:Date.now(),
 name:s_name.value,
 job:s_job.value,
 section:s_section.value,
-pagi:s_pagi.value,
-petang:s_petang.value,
-note:s_note.value,
-photo:preview.src||staff[i].photo
+pagi:"Hadir",
+petang:"Hadir",
+note:"",
+photo:preview.src||""
 };
-}else{
-staff.push({
-id:Date.now(),
+
+await fetch(URL,{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify(obj)
+});
+
+load();
+}
+
+/* DELETE */
+async function del(id){
+
+if(currentUser.role!="admin")return;
+
+await fetch(URL,{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({action:"delete",id})
+});
+
+load();
+}
+
+/* EDIT SAVE */
+async function saveStaff(){
+
+if(editId){
+
+await fetch(URL,{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({
+action:"update",
+id:editId,
 name:s_name.value,
 job:s_job.value,
 section:s_section.value,
@@ -382,17 +292,25 @@ pagi:s_pagi.value,
 petang:s_petang.value,
 note:s_note.value,
 photo:preview.src||""
+})
 });
+
+editId=null;
+
+}else{
+
+await add();
 }
 
-localStorage.setItem("staff",JSON.stringify(staff));
-render();kpi();closeForm();
+closeForm();
+load();
 }
 
 /* EDIT */
 function edit(id){
 if(currentUser.role!="admin")return;
-let s=staff.find(x=>x.id==id);
+
+let s=data.find(x=>x.id==id);
 editId=id;
 
 s_name.value=s.name;
@@ -405,19 +323,19 @@ s_note.value=s.note;
 staffForm.style.display="block";
 }
 
-/* FILTER + RENDER */
+/* RENDER */
 function render(){
+
 let filter=sortDept.value;
 
-let data=staff;
-
+let filtered = data;
 if(filter!="all"){
-data=data.filter(x=>x.section==filter);
+filtered = data.filter(x=>x.section==filter);
 }
 
 let h="";
 
-data.forEach(s=>{
+filtered.forEach(s=>{
 let st=status(s);
 
 h+=`
@@ -441,42 +359,23 @@ ${currentUser.role=="admin"?
 report.innerHTML=h;
 }
 
-/* DELETE */
-function del(id){
-if(currentUser.role!="admin")return;
-staff=staff.filter(x=>x.id!==id);
-localStorage.setItem("staff",JSON.stringify(staff));
-render();kpi();
-}
-
 /* STATUS */
 function status(s){
 if(s.pagi=="Cuti"&&s.petang=="Cuti")return["CUTI","cuti"];
 if(s.pagi=="Tiada"&&s.petang=="Tiada")return["TIADA","tiada"];
-if(s.pagi=="Urusan"||s.petang=="Urusan")return["URUSAN","urusan"];
+if(s.pagi=="Urusan")return["URUSAN","urusan"];
 return["HADIR","hadir"];
 }
 
-/* KPI */
-function kpi(){
-let h=0,c=0,t=0,u=0;
-
-staff.forEach(s=>{
-if(s.pagi=="Hadir"||s.petang=="Hadir")h++;
-if(s.pagi=="Cuti"&&s.petang=="Cuti")c++;
-if(s.pagi=="Tiada"&&s.petang=="Tiada")t++;
-if(s.pagi=="Urusan"||s.petang=="Urusan")u++;
-});
-
-kpiHadir.innerText=h;
-kpiCuti.innerText=c;
-kpiTiada.innerText=t;
-kpiUrusan.innerText=u;
+/* SYNC BUTTON */
+function syncData(){
+if(currentUser.role!="admin")return;
+alert("Already synced with Google Sheets");
 }
 
 /* INIT */
-render();kpi();
-
+load();
+  
 </script>
 </body>
 </html>
